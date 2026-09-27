@@ -1,0 +1,12 @@
+Trace for bib AUS-1147 (what the saved Logs Insights query returns):
+
+23:49:42.945  INFO  ACCEPTED  rev=1  PROVISIONAL      req=d7944fe8
+23:49:42.959  INFO  ACCEPTED  rev=2  CONFIRMED        req=7f837907
+23:49:42.971  INFO  ACCEPTED  rev=3  OFFICIAL         req=5499d1a8
+23:49:42.974  INFO  IGNORED   rev=3  OFFICIAL     stored=3  DUPLICATE_OR_SAME_REVISION  req=ddd80297
+23:49:42.975  INFO  IGNORED   rev=2  CONFIRMED    stored=3  STALE  req=3b5ab2a2
+
+Rejected (what the second saved query returns):
+
+23:49:42.976 bib=ZZZ-9999 {"field":"status","reason":"must be one of PROVISIONAL, CONFIRMED, OFFICIAL"}
+23:49:42.977 bib=- "invalid JSON: Unexpected end of JSON input"

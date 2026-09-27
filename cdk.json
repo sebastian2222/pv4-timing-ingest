@@ -1,0 +1,3 @@
+{
+  "app": "npx tsx bin/pv4.ts"
+}

@@ -1,0 +1,39 @@
+{
+  "name": "pv4-core-tdd",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "vitest run test/e2e",
+    "dev": "tsx dev/local-stack.ts",
+    "test:local": "INGEST_URL=http://localhost:4000/timing GRAPHQL_URL=http://localhost:4000/graphql API_KEY=local-key vitest run test/e2e",
+    "typecheck": "tsc -p .",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy --require-approval never --outputs-file cdk-outputs.json",
+    "destroy": "cdk destroy",
+    "reset-data": "tsx scripts/reset-data.ts",
+    "test:ddb": "vitest run test/dynamoStore.local.test.ts"
+  },
+  "devDependencies": {
+    "@aws-appsync/utils": "^2.1.1",
+    "@types/aws-lambda": "^8.10.163",
+    "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
+    "aws-cdk": "^2.1143.0",
+    "aws-cdk-lib": "^2.271.0",
+    "aws-sdk-client-mock": "^4.1.0",
+    "constructs": "^10.8.1",
+    "esbuild": "^0.28.2",
+    "graphql": "^17.0.2",
+    "playwright": "^1.63.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1141.0",
+    "@aws-sdk/client-s3": "^3.1141.0",
+    "@aws-sdk/lib-dynamodb": "^3.1141.0"
+  }
+}

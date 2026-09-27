@@ -1,0 +1,23 @@
+enum ResultStatus { PROVISIONAL CONFIRMED OFFICIAL }
+
+type Result {
+  bib:      ID!
+  lane:     Int!
+  revision: Int!
+  status:   ResultStatus!
+  timeMs:   Int!
+}
+
+type EventStats {
+  eventId:         ID!
+  athletesTracked: Int!   # distinct bibs with stored state
+  updatesAccepted: Int!   # updates that changed stored state
+  updatesIgnored:  Int!   # valid, but not applied — duplicate or stale revision
+}
+
+type Query {
+  events:                   [ID!]!
+  results(eventId: ID!):    [Result!]!
+  eventStats(eventId: ID!): EventStats!
+  updatesRejected:          Int!   # failed validation, pipeline-wide
+}
