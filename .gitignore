@@ -1,0 +1,10 @@
+node_modules
+cdk.out
+cdk-outputs.json
+.env*
+screenshots/*.tmp
+coverage
+CANDIDATE_BRIEF.md
+plan.md
+pv4-tdd.tar.gz
+docs-trace.txt
