@@ -16,6 +16,7 @@ export class Pv4Stack extends Stack {
   constructor(scope: Construct, id: string, props: Pv4StackProps = {}) {
     super(scope, id, props);
     const root = join(import.meta.dirname, '..');
+    // Table first, then the writer, then the reader, then the page and the alarms.
     const data = new Data(this, 'Data');
     const ingest = new Ingest(this, 'Ingest', { table: data.table, bucket: data.bucket });
     const api = makeApi(this, join(root, 'schema.graphql'));

@@ -63,4 +63,4 @@ npm run dev       # fake ingest + GraphQL + page on http://localhost:4000
 
 ## Results page
 
-`screenshots/` shows the page: a race, the same page after refresh, dark mode, and a narrow viewport. The event list comes from the `events` query. Refresh fetches again without reloading. Auto every 5s does the same while the tab is visible.
+`screenshots/` shows the page: a race, the same page after the 5 second poll, dark mode, and a narrow viewport. The event list comes from the `events` query. The page asks again every 5 seconds while the tab is visible, so a new result shows up without a reload.

@@ -1,5 +1,8 @@
 import { util } from '@aws-appsync/utils';
 
+// Pipeline-wide. A corrupt body may not contain an eventId, so this counter
+// cannot live on an event row. Missing item means nothing has been rejected yet.
+
 export function request() {
   return {
     operation: 'GetItem',

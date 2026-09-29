@@ -61,6 +61,8 @@ async function apply(deps: ProcessDeps, sleep: (ms: number) => Promise<void>, re
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
+      // The read only chooses which transaction to try. DynamoDB re-checks
+      // the revision inside the transaction, so a race cannot apply a stale write.
       const stored = await deps.store.getAthlete(u.eventId, u.bib);
       const result = stored === undefined
         ? await deps.store.createAthlete(u, requestId)
@@ -80,6 +82,8 @@ async function apply(deps: ProcessDeps, sleep: (ms: number) => Promise<void>, re
       if (attempt > 1) deps.log.metric('TransactionConflictRetries', attempt - 1, 'Count', base);
 
       if (outcome === 'ACCEPTED') {
+        // A jury reopen is a higher revision with a less-ratified status.
+        // Count it only when this attempt actually wrote the row.
         if (result.kind === 'COMMITTED' && stored && rank(u.status) < rank(stored.status)) {
           deps.log.metric('ResultsReopened', 1, 'Count', base);
         }
@@ -88,6 +92,8 @@ async function apply(deps: ProcessDeps, sleep: (ms: number) => Promise<void>, re
       }
 
       if (outcome === 'IGNORED') {
+        // Lower than stored is a late copy. Equal is a duplicate, even when
+        // status or timeMs differ. First write of that revision wins.
         const reason = stored && u.revision < stored.revision ? 'STALE' : 'DUPLICATE_OR_SAME_REVISION';
         if (stored && u.revision === stored.revision && conflicts(stored, u)) {
           deps.log.warn('conflicting revision', {
@@ -180,6 +186,7 @@ function traceOf(value: unknown): Record<string, unknown> {
 }
 
 function backoffMs(attempt: number): number {
+  // Short, and random, so parallel updates that collided do not all retry together.
   const cap = Math.min(25 * 2 ** (attempt - 1), 250);
   return Math.floor(Math.random() * cap);
 }

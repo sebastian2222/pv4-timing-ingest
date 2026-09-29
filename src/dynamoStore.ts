@@ -37,6 +37,7 @@ export class DynamoStore implements Store {
     return { revision: item.revision as number, status: item.status as string, lane: item.lane as number, timeMs: item.timeMs as number };
   }
 
+  /** New bib. The put fails if another request created this athlete first. */
   createAthlete(u: TimingUpdate, requestId: string): Promise<TxResult> {
     const updatedAt = this.now().toISOString();
     return this.write(requestId, 3, [
@@ -44,6 +45,7 @@ export class DynamoStore implements Store {
         Put: {
           TableName: this.tableName,
           Item: { ...athleteKey(u.eventId, u.bib), eventId: u.eventId, bib: u.bib, lane: u.lane, revision: u.revision, status: u.status, timeMs: u.timeMs, updatedAt },
+          // Only the first writer creates the row. A loser retries and then advances or ignores.
           ConditionExpression: 'attribute_not_exists(pk)',
         },
       },
@@ -51,6 +53,7 @@ export class DynamoStore implements Store {
         Update: {
           TableName: this.tableName,
           Key: { pk: `EVENT#${u.eventId}`, sk: 'STATS' },
+          // athletesTracked moves only here, so it stays equal to the number of athlete rows.
           UpdateExpression: 'ADD updatesAccepted :one, athletesTracked :one SET eventId = :eventId',
           ExpressionAttributeValues: { ':one': 1, ':eventId': u.eventId },
         },
@@ -65,6 +68,7 @@ export class DynamoStore implements Store {
     ]);
   }
 
+  /** Higher revision. Status is written, never compared. `#status` is required because status is a reserved word. */
   advanceAthlete(u: TimingUpdate, requestId: string): Promise<TxResult> {
     return this.write(requestId, 2, [
       {
@@ -72,6 +76,7 @@ export class DynamoStore implements Store {
           TableName: this.tableName,
           Key: athleteKey(u.eventId, u.bib),
           UpdateExpression: 'SET eventId = :eventId, bib = :bib, lane = :lane, #revision = :rev, #status = :status, timeMs = :timeMs, updatedAt = :updatedAt',
+          // Same rule as decide(): apply only when the stored revision is still lower.
           ConditionExpression: '#revision < :rev',
           ExpressionAttributeNames: { '#revision': 'revision', '#status': 'status' },
           ExpressionAttributeValues: {
@@ -92,6 +97,7 @@ export class DynamoStore implements Store {
     ]);
   }
 
+  /** Not newer. The athlete row is not changed. The condition fails if a newer revision landed since the read. */
   recordIgnored(u: TimingUpdate, requestId: string): Promise<TxResult> {
     return this.write(requestId, 2, [
       {
@@ -115,6 +121,7 @@ export class DynamoStore implements Store {
     ]);
   }
 
+  /** Bad payload. Counted on GLOBAL because the body may not name a real event. */
   recordRejected(requestId: string): Promise<TxResult> {
     return this.write(requestId, 1, [
       {
@@ -130,6 +137,8 @@ export class DynamoStore implements Store {
   }
 
   private ttl(): number {
+    // DynamoDB TTL is unix seconds. The marker only exists so a lost response
+    // is not counted twice; a day is long enough for that retry.
     return Math.floor(this.now().getTime() / 1000) + 86_400;
   }
 
@@ -165,6 +174,8 @@ export class DynamoStore implements Store {
 }
 
 function athleteKey(eventId: string, bib: string) {
+  // The user value always comes after the prefix, so an id that contains '#'
+  // cannot collide with STATS, EVENTS, or a delivery marker.
   return { pk: `EVENT#${eventId}`, sk: `BIB#${bib}` };
 }
 
@@ -173,6 +184,7 @@ function deliveryKey(requestId: string) {
 }
 
 function deliveryPut(tableName: string, requestId: string, outcome: Outcome, ttl: number) {
+  // attribute_not_exists makes the second attempt of the same request a no-op.
   return {
     Put: {
       TableName: tableName,

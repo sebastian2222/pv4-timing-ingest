@@ -10,6 +10,7 @@ export function addResolvers(scope: Construct, api: appsync.GraphqlApi, table: d
   const source = new appsync.DynamoDbDataSource(scope, 'Table', {
     api,
     table,
+    // The page only reads. Writes go through the ingest Lambda, which has its own role.
     readOnlyAccess: true,
   });
   const dir = join(import.meta.dirname, '../resolvers');

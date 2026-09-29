@@ -76,12 +76,11 @@
   <header>
     <div>
       <h1>PV4 live results</h1>
-      <div class="sub">Results change while a race is adjudicated. Refresh to see the latest.</div>
+      <div class="sub">Results renew every 5 seconds while this tab is open.</div>
     </div>
     <div class="controls">
       <select id="event" aria-label="Event"><option value="">Loading events…</option></select>
-      <button id="refresh" type="button">Refresh</button>
-      <label class="auto"><input id="auto" type="checkbox"> Auto every 5s</label>
+      <label class="auto"><input id="auto" type="checkbox" checked> Renews every 5 seconds</label>
     </div>
   </header>
 
@@ -117,7 +116,7 @@
   // config.json is written by CDK at deploy time (API URL + key), so nothing is hardcoded here.
   let cfg = null;
   const $ = (id) => document.getElementById(id);
-  const sel = $('event'), btn = $('refresh'), auto = $('auto');
+  const sel = $('event'), auto = $('auto');
   let previous = new Map(); // bib -> last seen result, to highlight changes between fetches
   let previousEvent = null;
   let timer = null;
@@ -249,9 +248,9 @@
   }
 
   async function refresh() {
+    // Ignore a tick that arrives while the previous request is still in flight.
     if (inFlight) return;
     inFlight = true;
-    btn.disabled = true;
     try {
       // Normally ONE request: events + the chosen event's data together.
       // A second request is needed only on first load or if the chosen event disappeared.
@@ -273,7 +272,6 @@
       showError(`Could not refresh: ${err.message}. Showing the last data received.`);
     } finally {
       inFlight = false;
-      btn.disabled = false;
     }
   }
 
@@ -282,8 +280,8 @@
     timer = on ? setInterval(() => { if (!document.hidden) refresh(); }, 5000) : null;
   }
 
-  btn.addEventListener('click', refresh);
   sel.addEventListener('change', refresh);
+  // The box starts checked. Unchecking it stops the timer; checking it starts it again.
   auto.addEventListener('change', () => setAuto(auto.checked));
 
   (async () => {
@@ -296,6 +294,7 @@
       return;
     }
     refresh();
+    setAuto(auto.checked);
   })();
 })();
 </script>

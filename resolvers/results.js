@@ -1,5 +1,8 @@
 import { util } from '@aws-appsync/utils';
 
+// Athlete rows for one race. begins_with(sk, 'BIB#') skips the STATS item
+// that shares the same pk. limit 1000 is one race, not a whole championship.
+
 export function request(ctx) {
   return {
     operation: 'Query',

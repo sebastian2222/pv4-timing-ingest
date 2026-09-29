@@ -1,5 +1,8 @@
 import { util } from '@aws-appsync/utils';
 
+// Per-race counters. A missing item means the race was never seen: return
+// zeros and echo the eventId, not null. 0 is a real value, and `|| 0` keeps it.
+
 export function request(ctx) {
   return {
     operation: 'GetItem',
